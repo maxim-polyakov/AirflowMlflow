@@ -22,6 +22,12 @@ x-airflow-common: &airflow-common
     KAFKA_LOGS_BUCKET: ${KAFKA_LOGS_BUCKET}
     KAFKA_LOGS_PREFIX: ${KAFKA_LOGS_PREFIX}
     KAFKA_LOGS_MAX_FILES_PER_RUN: ${KAFKA_LOGS_MAX_FILES_PER_RUN:-100}
+    VAST_SSH_HOST: ${VAST_SSH_HOST:-}
+    VAST_SSH_PORT: ${VAST_SSH_PORT:-22}
+    VAST_SSH_USER: ${VAST_SSH_USER:-root}
+    VAST_SSH_KEY_PATH: /opt/airflow/keys/vast_ai
+    VAST_SSH_STRICT_HOST_KEY: ${VAST_SSH_STRICT_HOST_KEY:-false}
+    VAST_LOGS_PATH: ${VAST_LOGS_PATH:-/workspace/data/kafka-logs}
     AIRFLOW_ADMIN_USER: ${AIRFLOW_ADMIN_USER}
     AIRFLOW_ADMIN_PASSWORD: ${AIRFLOW_ADMIN_PASSWORD}
     AIRFLOW_ADMIN_EMAIL: ${AIRFLOW_ADMIN_EMAIL}
@@ -30,6 +36,7 @@ x-airflow-common: &airflow-common
     - ./dags:/opt/airflow/dags
     - ./logs:/opt/airflow/logs
     - ./data:/opt/airflow/data
+    - ./keys:/opt/airflow/keys:ro
   user: "${AIRFLOW_UID:-50000}:0"
   restart: unless-stopped
 
