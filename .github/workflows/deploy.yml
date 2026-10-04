@@ -60,7 +60,6 @@ jobs:
           DEPLOY_PORT: ${{ secrets.DEPLOY_PORT }}
           DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
           DEPLOY_PATH: ${{ secrets.DEPLOY_PATH }}
-          VAST_SSH_PRIVATE_KEY: ${{ secrets.VAST_SSH_PRIVATE_KEY }}
         run: |
           for name in DEPLOY_ENV DEPLOY_SSH_KEY DEPLOY_HOST DEPLOY_PORT DEPLOY_USER DEPLOY_PATH; do
             if [ -z "${!name:-}" ]; then
@@ -69,11 +68,6 @@ jobs:
             fi
           done
           printf '%s\n' "$DEPLOY_ENV" > .env
-          mkdir -p keys
-          if [ -n "${VAST_SSH_PRIVATE_KEY:-}" ]; then
-            printf '%s\n' "$VAST_SSH_PRIVATE_KEY" > keys/vast_ai
-            chmod 600 keys/vast_ai
-          fi
 
       - name: Copy project to server
         uses: appleboy/scp-action@v1.0.0
@@ -82,7 +76,7 @@ jobs:
           username: ${{ secrets.DEPLOY_USER }}
           key: ${{ secrets.DEPLOY_SSH_KEY }}
           port: ${{ secrets.DEPLOY_PORT }}
-          source: "Dockerfile.airflow,Dockerfile.mlflow,docker-compose.yml,dags,scripts,deploy,keys,README.md,.env"
+          source: "Dockerfile.airflow,Dockerfile.mlflow,docker-compose.yml,dags,scripts,deploy,README.md,.env"
           target: ${{ secrets.DEPLOY_PATH }}
           overwrite: true
 
@@ -101,7 +95,6 @@ jobs:
             set -eu
             cd "$DEPLOY_PATH"
             chmod 600 .env
-            if [ -f keys/vast_ai ]; then chmod 600 keys/vast_ai; fi
             rm -f dags/s3_download.py
             docker-compose down --remove-orphans
             docker-compose build

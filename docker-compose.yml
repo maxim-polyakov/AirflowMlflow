@@ -10,6 +10,7 @@ x-airflow-common: &airflow-common
     AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: ${AIRFLOW_DATABASE_URL}
     AIRFLOW__WEBSERVER__BASE_URL: https://${AIRFLOW_DOMAIN}
     AIRFLOW__WEBSERVER__ENABLE_PROXY_FIX: "true"
+    AIRFLOW__API__AUTH_BACKENDS: airflow.api.auth.backend.basic_auth,airflow.api.auth.backend.session
     AIRFLOW__CORE__DAGS_ARE_PAUSED_AT_CREATION: "true"
     AIRFLOW__SCHEDULER__ENABLE_HEALTH_CHECK: "true"
     AIRFLOW_UID: ${AIRFLOW_UID:-50000}
@@ -17,17 +18,10 @@ x-airflow-common: &airflow-common
     AWS_SECRET_ACCESS_KEY: ${S3_SECRET_KEY}
     AWS_DEFAULT_REGION: ${S3_REGION}
     S3_ENDPOINT_URL: ${S3_ENDPOINT_URL}
-    DATA_BUCKET: ${DATA_BUCKET}
-    DATA_OBJECT_KEY: ${DATA_OBJECT_KEY}
     KAFKA_LOGS_BUCKET: ${KAFKA_LOGS_BUCKET}
     KAFKA_LOGS_PREFIX: ${KAFKA_LOGS_PREFIX}
     KAFKA_LOGS_MAX_FILES_PER_RUN: ${KAFKA_LOGS_MAX_FILES_PER_RUN:-100}
-    VAST_SSH_HOST: ${VAST_SSH_HOST:-}
-    VAST_SSH_PORT: ${VAST_SSH_PORT:-22}
-    VAST_SSH_USER: ${VAST_SSH_USER:-root}
-    VAST_SSH_KEY_PATH: /opt/airflow/keys/vast_ai
-    VAST_SSH_STRICT_HOST_KEY: ${VAST_SSH_STRICT_HOST_KEY:-false}
-    VAST_LOGS_PATH: ${VAST_LOGS_PATH:-/workspace/data/kafka-logs}
+    KAFKA_LOGS_PRESIGNED_URL_TTL_SECONDS: ${KAFKA_LOGS_PRESIGNED_URL_TTL_SECONDS:-3600}
     AIRFLOW_ADMIN_USER: ${AIRFLOW_ADMIN_USER}
     AIRFLOW_ADMIN_PASSWORD: ${AIRFLOW_ADMIN_PASSWORD}
     AIRFLOW_ADMIN_EMAIL: ${AIRFLOW_ADMIN_EMAIL}
@@ -36,7 +30,6 @@ x-airflow-common: &airflow-common
     - ./dags:/opt/airflow/dags
     - ./logs:/opt/airflow/logs
     - ./data:/opt/airflow/data
-    - ./keys:/opt/airflow/keys:ro
   user: "${AIRFLOW_UID:-50000}:0"
   restart: unless-stopped
 
