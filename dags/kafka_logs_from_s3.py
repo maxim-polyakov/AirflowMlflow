@@ -1,9 +1,7 @@
 from __future__ import annotations
 
-import base64
-import hashlib
 import os
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 
 import boto3
 from airflow.decorators import dag, task
@@ -22,9 +20,9 @@ from airflow.operators.python import get_current_context
 def prepare_galaxy_logs_for_jupyter() -> None:
     @task
     def create_download_manifest() -> dict[str, object]:
-        """Download Kafka log objects from S3 inside Airflow and return bytes via XCom.
+        """List new Kafka log objects and return short-lived presigned URLs.
 
-        Jupyter reads only this Airflow XCom payload. It must never call S3.
+        Airflow holds S3 credentials. Jupyter only downloads via temporary URLs.
         """
         context = get_current_context()
         dag_run = context["dag_run"]
@@ -35,12 +33,14 @@ def prepare_galaxy_logs_for_jupyter() -> None:
             "KAFKA_LOGS_PREFIX",
             "storm-training/galaxy.storms/",
         )
-        # Keep pages small: XCom carries file bytes for the notebook.
         max_files = min(
-            int(conf.get("max_files", os.environ.get("KAFKA_LOGS_MAX_FILES_PER_RUN", "25"))),
-            100,
+            int(conf.get("max_files", os.environ.get("KAFKA_LOGS_MAX_FILES_PER_RUN", "100"))),
+            500,
         )
         last_key = str(conf.get("last_key", ""))
+        url_ttl = int(
+            os.environ.get("KAFKA_LOGS_PRESIGNED_URL_TTL_SECONDS", "3600")
+        )
 
         s3 = boto3.client(
             "s3",
@@ -61,26 +61,27 @@ def prepare_galaxy_logs_for_jupyter() -> None:
         if not pending:
             raise AirflowSkipException("No new Kafka log objects in S3")
 
-        files: list[dict[str, str]] = []
-        for key in pending:
-            response = s3.get_object(Bucket=bucket, Key=key)
-            payload = response["Body"].read()
-            digest = hashlib.sha256(key.encode("utf-8")).hexdigest()[:20]
-            files.append(
-                {
-                    "key": key,
-                    "filename": f"{digest}.json.gz",
-                    "content_b64": base64.b64encode(payload).decode("ascii"),
-                }
-            )
-
+        files = [
+            {
+                "key": key,
+                "url": s3.generate_presigned_url(
+                    "get_object",
+                    Params={"Bucket": bucket, "Key": key},
+                    ExpiresIn=url_ttl,
+                ),
+            }
+            for key in pending
+        ]
         return {
             "bucket": bucket,
             "prefix": prefix,
-            "keys": pending,
             "files": files,
+            "keys": pending,
             "last_key": pending[-1],
             "file_count": len(files),
+            "expires_at": (
+                datetime.now(UTC) + timedelta(seconds=url_ttl)
+            ).isoformat(),
             "prepared_at": datetime.now(UTC).isoformat(),
         }
 

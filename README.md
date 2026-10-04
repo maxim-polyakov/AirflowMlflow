@@ -64,16 +64,16 @@ sudo certbot --nginx \
 В Airflow включите и запустите DAG `download_dataset_from_s3`. Он скачает
 `s3://DATA_BUCKET/DATA_OBJECT_KEY` в общий каталог `data/input`.
 
-## 3. Данные для Jupyter: S3 → Airflow → notebook
+## 3. Данные для Jupyter: S3 → Airflow (presigned URL) → notebook
 
-DAG `prepare_galaxy_logs_for_jupyter` скачивает объекты Kafka-логов из S3
-внутри Airflow и возвращает их в XCom как `content_b64`. Notebook на Vast
-читает только Airflow REST API и не обращается к S3.
+DAG `prepare_galaxy_logs_for_jupyter` листит новые объекты Kafka-логов в S3
+и возвращает короткоживущие download URL в XCom. Notebook скачивает эти URL
+без S3 access keys — ключи остаются только у Airflow.
 
 Параметры DAG run:
 
 ```json
-{"max_files": 25, "last_key": ""}
+{"max_files": 100, "last_key": ""}
 ```
 
 ## 4. Логирование модели из Vast notebook
