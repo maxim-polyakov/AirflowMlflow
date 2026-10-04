@@ -59,25 +59,40 @@ PY
         --disable-pip-version-check \
         -r "${model_path}/requirements.txt"
     fi
+    # Keep pins compatible with serving Python 3.11 (mlflow deps can float higher).
+    "${environment_path}/bin/pip" install \
+      --disable-pip-version-check \
+      "numpy>=1.26,<2.3" \
+      "scikit-learn>=1.5,<1.7" \
+      "pandas>=2.0,<3" \
+      "joblib>=1.3,<2"
+    "${environment_path}/bin/python" - <<'PY'
+import numpy, sklearn, pandas, joblib, mlflow
+print(
+    "serving env:",
+    "numpy", numpy.__version__,
+    "sklearn", sklearn.__version__,
+    "pandas", pandas.__version__,
+    "joblib", joblib.__version__,
+    "mlflow", mlflow.__version__,
+)
+PY
     printf '%s\n' "${model_path}" >"${model_path_file}"
   fi
 
   model_path="$(cat "${model_path_file}")"
   echo "Starting ${MODEL_NAME} version ${version} on port ${MODEL_SERVING_PORT}"
-  # Use python -m: venv/bin/mlflow can be missing after a broken/partial venv rebuild.
   if [ ! -x "${environment_path}/bin/python" ]; then
     echo "ERROR: broken venv at ${environment_path} (python missing); wiping"
     rm -rf "${version_root}"
     return 1
   fi
-  if [ ! -x "${environment_path}/bin/mlflow" ]; then
-    echo "mlflow console script missing; ensuring package is importable via python -m"
-    "${environment_path}/bin/python" -c "import mlflow; print('mlflow', mlflow.__version__)"
-  fi
+  # python -m: venv/bin/mlflow is sometimes missing after partial rebuilds
   "${environment_path}/bin/python" -m mlflow models serve \
     --model-uri "${model_path}" \
     --host 0.0.0.0 \
     --port "${MODEL_SERVING_PORT}" \
+    --workers 1 \
     --env-manager local &
   server_pid="$!"
 }
@@ -101,4 +116,3 @@ while true; do
 
   sleep "${MODEL_POLL_SECONDS}"
 done
-
