@@ -64,7 +64,19 @@ sudo certbot --nginx \
 В Airflow включите и запустите DAG `download_dataset_from_s3`. Он скачает
 `s3://DATA_BUCKET/DATA_OBJECT_KEY` в общий каталог `data/input`.
 
-## 3. Логирование модели из Vast notebook
+## 3. Данные для Jupyter: S3 → Airflow → notebook
+
+DAG `prepare_galaxy_logs_for_jupyter` скачивает объекты Kafka-логов из S3
+внутри Airflow и возвращает их в XCom как `content_b64`. Notebook на Vast
+читает только Airflow REST API и не обращается к S3.
+
+Параметры DAG run:
+
+```json
+{"max_files": 25, "last_key": ""}
+```
+
+## 4. Логирование модели из Vast notebook
 
 MLflow должен быть доступен с Vast по публичному HTTPS URL, через VPN либо
 SSH-туннель. Загрузка артефактов идет через MLflow, поэтому S3-ключи на
@@ -118,7 +130,7 @@ MLflow inference server. Проверка API:
 curl -u model-api:<пароль> https://model.baxic.ru/ping
 ```
 
-## 4. Запуск модели на Vast без Docker
+## 5. Запуск модели на Vast без Docker
 
 При создании Vast-инстанса откройте TCP-порт `8000`. В Jupyter Terminal:
 
@@ -149,7 +161,7 @@ Inference выполняется запросом `POST /invocations` на вн�
 ее `requirements.txt`. Флаг `--no-conda` запускает модель в текущем
 Python-окружении инстанса.
 
-## 5. Деплой через GitHub Actions
+## 6. Деплой через GitHub Actions
 
 В `Settings → Secrets and variables → Actions` создайте Secrets:
 
