@@ -127,6 +127,11 @@ services:
       MODEL_ALIAS: ${MODEL_ALIAS:-production}
       MODEL_SERVING_PORT: "8000"
       MODEL_POLL_SECONDS: ${MODEL_POLL_SECONDS:-60}
+      # Needed when model versions point at s3://... (direct notebook uploads).
+      AWS_ACCESS_KEY_ID: ${S3_ACCESS_KEY}
+      AWS_SECRET_ACCESS_KEY: ${S3_SECRET_KEY}
+      AWS_DEFAULT_REGION: ${S3_REGION}
+      MLFLOW_S3_ENDPOINT_URL: ${S3_ENDPOINT_URL}
     command: ["/bin/sh", "/app/model-serving-entrypoint.sh"]
     volumes:
       - ./scripts/model-serving-entrypoint.sh:/app/model-serving-entrypoint.sh:ro
