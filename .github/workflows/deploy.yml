@@ -55,9 +55,14 @@ jobs:
       - name: Create deployment environment
         env:
           DEPLOY_ENV: ${{ secrets.DEPLOY_ENV }}
+          DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
         run: |
           if [ -z "${DEPLOY_ENV:-}" ]; then
             echo "::error::GitHub Secret DEPLOY_ENV is missing or empty"
+            exit 1
+          fi
+          if [ -z "${DEPLOY_SSH_KEY:-}" ]; then
+            echo "::error::GitHub Secret DEPLOY_SSH_KEY is missing or empty"
             exit 1
           fi
           printf '%s\n' "$DEPLOY_ENV" > .env
