@@ -151,17 +151,14 @@ Python-окружении инстанса.
 
 ## 5. Деплой через GitHub Actions
 
-В `Settings → Secrets and variables → Actions` создайте Variables:
-
-- `DEPLOY_HOST=89.124.86.173`
-- `DEPLOY_USER=baxic`
-- `DEPLOY_PORT=22`
-- `DEPLOY_PATH=/home/baxic/Documents/GitHub/AirflowMlflow`
-
-И Secrets:
+В `Settings → Secrets and variables → Actions` создайте Secrets:
 
 - `DEPLOY_SSH_KEY` — полный приватный SSH-ключ;
 - `DEPLOY_ENV` — полное содержимое production-файла `.env`.
+- `DEPLOY_HOST=89.124.86.173`;
+- `DEPLOY_USER=baxic`;
+- `DEPLOY_PORT=22`;
+- `DEPLOY_PATH=/home/baxic/Documents/GitHub/AirflowMlflow`.
 
 Workflow `.github/workflows/deploy.yml` проверяет Compose и DAG, копирует
 проект по SSH, выполняет миграцию Airflow и запускает все сервисы.

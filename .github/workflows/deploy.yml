@@ -56,37 +56,39 @@ jobs:
         env:
           DEPLOY_ENV: ${{ secrets.DEPLOY_ENV }}
           DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+          DEPLOY_PORT: ${{ secrets.DEPLOY_PORT }}
+          DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
+          DEPLOY_PATH: ${{ secrets.DEPLOY_PATH }}
         run: |
-          if [ -z "${DEPLOY_ENV:-}" ]; then
-            echo "::error::GitHub Secret DEPLOY_ENV is missing or empty"
-            exit 1
-          fi
-          if [ -z "${DEPLOY_SSH_KEY:-}" ]; then
-            echo "::error::GitHub Secret DEPLOY_SSH_KEY is missing or empty"
-            exit 1
-          fi
+          for name in DEPLOY_ENV DEPLOY_SSH_KEY DEPLOY_HOST DEPLOY_PORT DEPLOY_USER DEPLOY_PATH; do
+            if [ -z "${!name:-}" ]; then
+              echo "::error::GitHub Secret ${name} is missing or empty"
+              exit 1
+            fi
+          done
           printf '%s\n' "$DEPLOY_ENV" > .env
 
       - name: Copy project to server
         uses: appleboy/scp-action@v1.0.0
         with:
-          host: ${{ vars.DEPLOY_HOST }}
-          username: ${{ vars.DEPLOY_USER }}
+          host: ${{ secrets.DEPLOY_HOST }}
+          username: ${{ secrets.DEPLOY_USER }}
           key: ${{ secrets.DEPLOY_SSH_KEY }}
-          port: ${{ vars.DEPLOY_PORT }}
+          port: ${{ secrets.DEPLOY_PORT }}
           source: "Dockerfile.airflow,Dockerfile.mlflow,docker-compose.yml,dags,scripts,deploy,README.md,.env"
-          target: ${{ vars.DEPLOY_PATH }}
+          target: ${{ secrets.DEPLOY_PATH }}
           overwrite: true
 
       - name: Build and start services
         uses: appleboy/ssh-action@v1.2.0
         env:
-          DEPLOY_PATH: ${{ vars.DEPLOY_PATH }}
+          DEPLOY_PATH: ${{ secrets.DEPLOY_PATH }}
         with:
-          host: ${{ vars.DEPLOY_HOST }}
-          username: ${{ vars.DEPLOY_USER }}
+          host: ${{ secrets.DEPLOY_HOST }}
+          username: ${{ secrets.DEPLOY_USER }}
           key: ${{ secrets.DEPLOY_SSH_KEY }}
-          port: ${{ vars.DEPLOY_PORT }}
+          port: ${{ secrets.DEPLOY_PORT }}
           envs: DEPLOY_PATH
           script_stop: true
           script: |
