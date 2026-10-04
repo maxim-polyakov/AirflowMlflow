@@ -95,6 +95,7 @@ jobs:
             set -eu
             cd "$DEPLOY_PATH"
             chmod 600 .env
+            docker-compose down --remove-orphans
             docker-compose build
             docker-compose run --rm airflow-init
             docker-compose up -d --remove-orphans
