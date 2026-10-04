@@ -50,7 +50,10 @@ print(mlflow.artifacts.download_artifacts(artifact_uri=uri, dst_path=sys.argv[3]
 PY
     )"
     virtualenv "${environment_path}"
-    "${environment_path}/bin/pip" install --disable-pip-version-check "mlflow==2.18.0"
+    "${environment_path}/bin/pip" install \
+      --disable-pip-version-check \
+      "mlflow==2.18.0" \
+      "sqlalchemy==2.0.36"
     if [ -f "${model_path}/requirements.txt" ]; then
       "${environment_path}/bin/pip" install \
         --disable-pip-version-check \
