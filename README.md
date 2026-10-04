@@ -73,7 +73,7 @@ DAG `prepare_galaxy_logs_for_jupyter` листит новые объекты Kaf
 Параметры DAG run:
 
 ```json
-{"max_files": 100, "last_key": ""}
+{"max_files": 20000, "last_key": ""}
 ```
 
 ## 4. Логирование модели из Vast notebook

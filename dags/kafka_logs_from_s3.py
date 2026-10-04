@@ -33,9 +33,10 @@ def prepare_galaxy_logs_for_jupyter() -> None:
             "KAFKA_LOGS_PREFIX",
             "storm-training/galaxy.storms/",
         )
+        # Small training dumps (~MB), not big data — allow large one-shot manifests.
         max_files = min(
-            int(conf.get("max_files", os.environ.get("KAFKA_LOGS_MAX_FILES_PER_RUN", "100"))),
-            500,
+            int(conf.get("max_files", os.environ.get("KAFKA_LOGS_MAX_FILES_PER_RUN", "20000"))),
+            50000,
         )
         last_key = str(conf.get("last_key", ""))
         url_ttl = int(
