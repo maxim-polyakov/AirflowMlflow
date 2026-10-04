@@ -87,6 +87,12 @@ PY
     rm -rf "${version_root}"
     return 1
   fi
+  # Always re-assert pins before serve — mlflow deps can float back to breaking versions.
+  "${environment_path}/bin/pip" install \
+    --disable-pip-version-check \
+    "numpy>=1.26,<2.3" \
+    "scikit-learn>=1.5,<1.7" >/dev/null
+  "${environment_path}/bin/python" -c "import numpy,sklearn; print('pre-serve pins:', numpy.__version__, sklearn.__version__)"
   # python -m: venv/bin/mlflow is sometimes missing after partial rebuilds
   "${environment_path}/bin/python" -m mlflow models serve \
     --model-uri "${model_path}" \
