@@ -4,8 +4,9 @@ import os
 from datetime import UTC, datetime, timedelta
 
 import boto3
-from airflow.decorators import dag, get_current_context, task
+from airflow.decorators import dag, task
 from airflow.exceptions import AirflowSkipException
+from airflow.operators.python import get_current_context
 
 
 @dag(
