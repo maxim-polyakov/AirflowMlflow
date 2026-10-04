@@ -126,7 +126,7 @@ services:
       - ./scripts/model-serving-entrypoint.sh:/app/model-serving-entrypoint.sh:ro
       - model-environments:/root/.mlflow
     ports:
-      - "${MODEL_PORT:-8000}:8000"
+      - "127.0.0.1:${MODEL_PORT:-8000}:8000"
     depends_on:
       mlflow:
         condition: service_healthy

@@ -34,9 +34,9 @@ docker compose up -d
 docker compose ps
 ```
 
-Airflow и MLflow доступны только локально на сервере на портах 8080 и 5000.
-Сервис `stormmodel` опубликован на внешнем порту 8000. Создайте DNS
-`A`-запись `model.baxic.ru` на тот же IP сервера.
+Airflow, MLflow и `stormmodel` доступны только локально на сервере на
+портах 8080, 5000 и 8000. Создайте DNS `A`-запись `model.baxic.ru` на тот
+же IP сервера.
 
 Установите и настройте системный Nginx:
 
