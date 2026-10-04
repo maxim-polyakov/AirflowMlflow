@@ -62,7 +62,7 @@ jobs:
           DEPLOY_PATH: ${{ secrets.DEPLOY_PATH }}
           VAST_SSH_PRIVATE_KEY: ${{ secrets.VAST_SSH_PRIVATE_KEY }}
         run: |
-          for name in DEPLOY_ENV DEPLOY_SSH_KEY DEPLOY_HOST DEPLOY_PORT DEPLOY_USER DEPLOY_PATH VAST_SSH_PRIVATE_KEY; do
+          for name in DEPLOY_ENV DEPLOY_SSH_KEY DEPLOY_HOST DEPLOY_PORT DEPLOY_USER DEPLOY_PATH; do
             if [ -z "${!name:-}" ]; then
               echo "::error::GitHub Secret ${name} is missing or empty"
               exit 1
@@ -70,8 +70,10 @@ jobs:
           done
           printf '%s\n' "$DEPLOY_ENV" > .env
           mkdir -p keys
-          printf '%s\n' "$VAST_SSH_PRIVATE_KEY" > keys/vast_ai
-          chmod 600 keys/vast_ai
+          if [ -n "${VAST_SSH_PRIVATE_KEY:-}" ]; then
+            printf '%s\n' "$VAST_SSH_PRIVATE_KEY" > keys/vast_ai
+            chmod 600 keys/vast_ai
+          fi
 
       - name: Copy project to server
         uses: appleboy/scp-action@v1.0.0
@@ -99,7 +101,7 @@ jobs:
             set -eu
             cd "$DEPLOY_PATH"
             chmod 600 .env
-            chmod 600 keys/vast_ai
+            if [ -f keys/vast_ai ]; then chmod 600 keys/vast_ai; fi
             rm -f dags/s3_download.py
             docker-compose down --remove-orphans
             docker-compose build
