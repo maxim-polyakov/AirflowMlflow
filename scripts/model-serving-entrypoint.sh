@@ -9,12 +9,12 @@ MODEL_SERVING_PORT="${MODEL_SERVING_PORT:-8000}"
 MODEL_POLL_SECONDS="${MODEL_POLL_SECONDS:-60}"
 MODEL_RUNTIME_ROOT="${MODEL_RUNTIME_ROOT:-/root/.mlflow/stormmodel}"
 
-# Serving image is Python 3.11 — keep ABI-safe pins even if model was logged on 3.12.
+# Serving image is Python 3.12.14 (same as Vast train). Keep model pip_requirements pins.
 PIN_NUMPY="numpy>=1.26,<2.3"
 PIN_SKLEARN="scikit-learn>=1.5,<1.7"
 PIN_PANDAS="pandas>=2.0,<3"
 PIN_JOBLIB="joblib>=1.3,<2"
-PIN_MARKER="pins-v2-numpyLT23-sklearnLT17"
+PIN_MARKER="pins-v3-py312-numpyLT23-sklearnLT17"
 
 current_version=""
 server_pid=""
