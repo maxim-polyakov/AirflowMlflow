@@ -1,0 +1,91 @@
+#!/usr/bin/env sh
+set -eu
+
+: "${MLFLOW_TRACKING_URI:?MLFLOW_TRACKING_URI is required}"
+: "${MODEL_NAME:?MODEL_NAME is required}"
+
+MODEL_ALIAS="${MODEL_ALIAS:-production}"
+MODEL_SERVING_PORT="${MODEL_SERVING_PORT:-8000}"
+MODEL_POLL_SECONDS="${MODEL_POLL_SECONDS:-60}"
+MODEL_RUNTIME_ROOT="${MODEL_RUNTIME_ROOT:-/root/.mlflow/stormmodel}"
+
+current_version=""
+server_pid=""
+
+mkdir -p "${MODEL_RUNTIME_ROOT}"
+
+stop_server() {
+  if [ -n "${server_pid}" ] && kill -0 "${server_pid}" 2>/dev/null; then
+    kill "${server_pid}"
+    wait "${server_pid}" || true
+  fi
+  server_pid=""
+}
+
+get_alias_version() {
+  python - "${MODEL_NAME}" "${MODEL_ALIAS}" <<'PY'
+import sys
+from mlflow import MlflowClient
+
+version = MlflowClient().get_model_version_by_alias(sys.argv[1], sys.argv[2])
+print(version.version)
+PY
+}
+
+start_server() {
+  version="$1"
+  version_root="${MODEL_RUNTIME_ROOT}/${version}"
+  model_path_file="${version_root}/model-path"
+  environment_path="${version_root}/venv"
+
+  mkdir -p "${version_root}"
+  if [ ! -f "${model_path_file}" ]; then
+    model_path="$(
+      python - "${MODEL_NAME}" "${version}" "${version_root}" <<'PY'
+import sys
+import mlflow
+
+uri = f"models:/{sys.argv[1]}/{sys.argv[2]}"
+print(mlflow.artifacts.download_artifacts(artifact_uri=uri, dst_path=sys.argv[3]))
+PY
+    )"
+    virtualenv "${environment_path}"
+    "${environment_path}/bin/pip" install --disable-pip-version-check "mlflow==2.18.0"
+    if [ -f "${model_path}/requirements.txt" ]; then
+      "${environment_path}/bin/pip" install \
+        --disable-pip-version-check \
+        -r "${model_path}/requirements.txt"
+    fi
+    printf '%s\n' "${model_path}" >"${model_path_file}"
+  fi
+
+  model_path="$(cat "${model_path_file}")"
+  echo "Starting ${MODEL_NAME} version ${version} on port ${MODEL_SERVING_PORT}"
+  "${environment_path}/bin/mlflow" models serve \
+    --model-uri "${model_path}" \
+    --host 0.0.0.0 \
+    --port "${MODEL_SERVING_PORT}" \
+    --env-manager local &
+  server_pid="$!"
+}
+
+trap 'stop_server; exit 0' INT TERM
+
+while true; do
+  if version="$(get_alias_version 2>/dev/null)"; then
+    if [ "${version}" != "${current_version}" ]; then
+      stop_server
+      start_server "${version}"
+      current_version="${version}"
+    elif [ -n "${server_pid}" ] && ! kill -0 "${server_pid}" 2>/dev/null; then
+      echo "Model server stopped unexpectedly; restarting"
+      current_version=""
+      server_pid=""
+    fi
+  else
+    echo "Waiting for models:/${MODEL_NAME}@${MODEL_ALIAS}"
+  fi
+
+  sleep "${MODEL_POLL_SECONDS}"
+done
+

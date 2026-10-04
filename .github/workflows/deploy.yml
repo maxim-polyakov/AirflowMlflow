@@ -1,0 +1,92 @@
+name: Deploy Airflow and MLflow
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+concurrency:
+  group: airflow-mlflow-production
+  cancel-in-progress: false
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Validate Python syntax
+        run: python -m compileall -q dags
+
+      - name: Validate Compose
+        env:
+          AIRFLOW_DATABASE_URL: postgresql+psycopg2://user:password@example.invalid/airflow
+          MLFLOW_DATABASE_URL: postgresql://user:password@example.invalid/mlflow
+          AIRFLOW_ADMIN_USER: admin
+          AIRFLOW_ADMIN_PASSWORD: placeholder
+          AIRFLOW_ADMIN_EMAIL: admin@example.com
+          AIRFLOW_FERNET_KEY: placeholder
+          AIRFLOW_WEBSERVER_SECRET_KEY: placeholder
+          AIRFLOW_DOMAIN: airflow.baxic.ru
+          MLFLOW_DOMAIN: mlflow.baxic.ru
+          S3_ENDPOINT_URL: https://storage.yandexcloud.net
+          S3_REGION: ru-central1
+          S3_ACCESS_KEY: placeholder
+          S3_SECRET_KEY: placeholder
+          DATA_BUCKET: placeholder
+          DATA_OBJECT_KEY: placeholder
+          KAFKA_LOGS_BUCKET: kafkalogs
+          KAFKA_LOGS_PREFIX: storm-training/galaxy.storms/
+          MLFLOW_ARTIFACT_BUCKET: placeholder
+          MLFLOW_ARTIFACT_PREFIX: artifacts
+          MODEL_NAME: stormmodel
+        run: docker-compose config --quiet
+
+  deploy:
+    needs: validate
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Create deployment environment
+        env:
+          DEPLOY_ENV: ${{ secrets.DEPLOY_ENV }}
+        run: |
+          test -n "$DEPLOY_ENV"
+          printf '%s\n' "$DEPLOY_ENV" > .env
+
+      - name: Copy project to server
+        uses: appleboy/scp-action@v1.0.0
+        with:
+          host: ${{ vars.DEPLOY_HOST }}
+          username: ${{ vars.DEPLOY_USER }}
+          key: ${{ secrets.DEPLOY_SSH_KEY }}
+          port: ${{ vars.DEPLOY_PORT }}
+          source: "Dockerfile.airflow,Dockerfile.mlflow,docker-compose.yml,dags,scripts,deploy,README.md,.env"
+          target: ${{ vars.DEPLOY_PATH }}
+          overwrite: true
+
+      - name: Build and start services
+        uses: appleboy/ssh-action@v1.2.0
+        env:
+          DEPLOY_PATH: ${{ vars.DEPLOY_PATH }}
+        with:
+          host: ${{ vars.DEPLOY_HOST }}
+          username: ${{ vars.DEPLOY_USER }}
+          key: ${{ secrets.DEPLOY_SSH_KEY }}
+          port: ${{ vars.DEPLOY_PORT }}
+          envs: DEPLOY_PATH
+          script_stop: true
+          script: |
+            set -eu
+            cd "$DEPLOY_PATH"
+            chmod 600 .env
+            docker-compose build
+            docker-compose run --rm airflow-init
+            docker-compose up -d --remove-orphans
+            docker-compose ps
+
