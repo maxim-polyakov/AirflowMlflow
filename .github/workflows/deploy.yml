@@ -100,6 +100,7 @@ jobs:
             cd "$DEPLOY_PATH"
             chmod 600 .env
             chmod 600 keys/vast_ai
+            rm -f dags/s3_download.py
             docker-compose down --remove-orphans
             docker-compose build
             docker-compose run --rm airflow-init
