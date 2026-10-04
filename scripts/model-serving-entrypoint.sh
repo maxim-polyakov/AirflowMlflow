@@ -64,7 +64,17 @@ PY
 
   model_path="$(cat "${model_path_file}")"
   echo "Starting ${MODEL_NAME} version ${version} on port ${MODEL_SERVING_PORT}"
-  "${environment_path}/bin/mlflow" models serve \
+  # Use python -m: venv/bin/mlflow can be missing after a broken/partial venv rebuild.
+  if [ ! -x "${environment_path}/bin/python" ]; then
+    echo "ERROR: broken venv at ${environment_path} (python missing); wiping"
+    rm -rf "${version_root}"
+    return 1
+  fi
+  if [ ! -x "${environment_path}/bin/mlflow" ]; then
+    echo "mlflow console script missing; ensuring package is importable via python -m"
+    "${environment_path}/bin/python" -c "import mlflow; print('mlflow', mlflow.__version__)"
+  fi
+  "${environment_path}/bin/python" -m mlflow models serve \
     --model-uri "${model_path}" \
     --host 0.0.0.0 \
     --port "${MODEL_SERVING_PORT}" \
