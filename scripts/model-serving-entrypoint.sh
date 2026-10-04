@@ -10,11 +10,11 @@ MODEL_POLL_SECONDS="${MODEL_POLL_SECONDS:-60}"
 MODEL_RUNTIME_ROOT="${MODEL_RUNTIME_ROOT:-/root/.mlflow/stormmodel}"
 
 # Serving image is Python 3.12.14 (same as Vast train). Keep model pip_requirements pins.
-PIN_NUMPY="numpy>=1.26,<2.3"
-PIN_SKLEARN="scikit-learn>=1.5,<1.7"
+PIN_NUMPY="numpy>=1.26,<2.6"
+PIN_SKLEARN="scikit-learn>=1.5,<2"
 PIN_PANDAS="pandas>=2.0,<3"
 PIN_JOBLIB="joblib>=1.3,<2"
-PIN_MARKER="pins-v3-py312-numpyLT23-sklearnLT17"
+PIN_MARKER="pins-v5-py312-numpyLT26-sklearnLT2"
 
 current_version=""
 server_pid=""
@@ -55,7 +55,7 @@ def parse(v):
 
 np_v = parse(numpy.__version__)
 sk_v = parse(sklearn.__version__)
-ok = (np_v < (2, 3, 0) and np_v >= (1, 26, 0) and sk_v < (1, 7, 0) and sk_v >= (1, 5, 0))
+ok = (np_v < (2, 6, 0) and np_v >= (1, 26, 0) and sk_v < (2, 0, 0) and sk_v >= (1, 5, 0))
 print("pin-check:", "numpy", numpy.__version__, "sklearn", sklearn.__version__, "ok" if ok else "BAD")
 sys.exit(0 if ok else 1)
 PY
