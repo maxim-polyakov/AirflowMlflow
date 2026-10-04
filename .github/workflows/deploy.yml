@@ -42,7 +42,7 @@ jobs:
           MLFLOW_ARTIFACT_BUCKET: placeholder
           MLFLOW_ARTIFACT_PREFIX: artifacts
           MODEL_NAME: stormmodel
-        run: docker-compose config --quiet
+        run: docker compose config --quiet
 
   deploy:
     needs: validate
