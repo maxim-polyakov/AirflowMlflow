@@ -76,7 +76,7 @@ jobs:
           username: ${{ secrets.DEPLOY_USER }}
           key: ${{ secrets.DEPLOY_SSH_KEY }}
           port: ${{ secrets.DEPLOY_PORT }}
-          source: "Dockerfile.airflow,Dockerfile.mlflow,docker-compose.yml,dags,scripts,deploy,README.md,.env"
+          source: "Dockerfile.airflow,Dockerfile.mlflow,docker-compose.yml,.dockerignore,dags,scripts,deploy,README.md,.env"
           target: ${{ secrets.DEPLOY_PATH }}
           overwrite: true
 
@@ -91,6 +91,7 @@ jobs:
           port: ${{ secrets.DEPLOY_PORT }}
           envs: DEPLOY_PATH
           script_stop: true
+          command_timeout: 60m
           script: |
             set -eu
             cd "$DEPLOY_PATH"

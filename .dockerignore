@@ -1,0 +1,9 @@
+.git
+.github
+.env
+.kube
+__pycache__
+*.py[cod]
+data
+keys
+logs
