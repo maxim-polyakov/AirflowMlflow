@@ -99,6 +99,7 @@ jobs:
             docker-compose down --remove-orphans
             docker-compose build
             docker-compose run --rm airflow-init
-            docker-compose up -d --remove-orphans
-            docker-compose ps
+            sudo -n /usr/local/sbin/compose-k3s-sync \
+              --project-dir "$DEPLOY_PATH" \
+              --skip-build
 
