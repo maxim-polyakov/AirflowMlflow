@@ -100,7 +100,7 @@ jobs:
             docker-compose down --remove-orphans
             docker-compose build
             docker-compose run --rm airflow-init
-bash "$DEPLOY_PATH/scripts/compose-k3s-sync.sh" \
+stdbuf -oL -eL bash "$DEPLOY_PATH/scripts/compose-k3s-sync.sh" \
 
               --project-dir "$DEPLOY_PATH" \
               --skip-build
