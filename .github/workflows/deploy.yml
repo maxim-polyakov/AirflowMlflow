@@ -100,8 +100,12 @@ jobs:
             docker-compose down --remove-orphans
             docker-compose build
             docker-compose run --rm airflow-init
-stdbuf -oL -eL bash "$DEPLOY_PATH/scripts/compose-k3s-sync.sh" \
-
+            export COMPOSE_BAKE=0
+            export BUILDX_NO_DEFAULT_ATTESTATIONS=1
+            export TMPDIR=/tmp
+            export COMPOSE_K3S_LOCK_WAIT=300
+            export COMPOSE_K3S_CLEAR_ORPHAN_LOCK=1
+            stdbuf -oL -eL bash "$DEPLOY_PATH/scripts/compose-k3s-sync.sh" \
               --project-dir "$DEPLOY_PATH" \
               --skip-build
 
