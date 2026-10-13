@@ -26,10 +26,6 @@ x-airflow-common: &airflow-common
     AIRFLOW_ADMIN_PASSWORD: ${AIRFLOW_ADMIN_PASSWORD}
     AIRFLOW_ADMIN_EMAIL: ${AIRFLOW_ADMIN_EMAIL}
     MLFLOW_TRACKING_URI: http://mlflow:5000
-  volumes:
-    - ./dags:/opt/airflow/dags
-    - ./logs:/opt/airflow/logs
-    - ./data:/opt/airflow/data
   user: "${AIRFLOW_UID:-50000}:0"
   restart: unless-stopped
 
@@ -133,9 +129,6 @@ services:
       AWS_DEFAULT_REGION: ${S3_REGION}
       MLFLOW_S3_ENDPOINT_URL: ${S3_ENDPOINT_URL}
     command: ["/bin/sh", "/app/model-serving-entrypoint.sh"]
-    volumes:
-      - ./scripts/model-serving-entrypoint.sh:/app/model-serving-entrypoint.sh:ro
-      - model-environments:/root/.mlflow
     ports:
       - "127.0.0.1:${MODEL_PORT:-8000}:8000"
     depends_on:
@@ -143,6 +136,4 @@ services:
         condition: service_healthy
     restart: unless-stopped
 
-volumes:
-  model-environments:
 

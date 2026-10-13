@@ -14,3 +14,6 @@ RUN pip install --no-cache-dir \
 
 WORKDIR /app
 
+COPY scripts/model-serving-entrypoint.sh /app/model-serving-entrypoint.sh
+RUN chmod +x /app/model-serving-entrypoint.sh
+
