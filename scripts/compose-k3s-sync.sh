@@ -99,6 +99,14 @@ apply_schema_patches() {
   "${kube[@]}" patch deployment "$deployment" -n "$namespace" --type=json \
     -p='[{"op":"remove","path":"/spec/template/spec/hostAliases"}]' >/dev/null 2>&1 || true
 
+  if [[ "$service" == airflow-* || "$service" == stormmodel ]]; then
+    "${kube[@]}" patch deployment "$deployment" -n "$namespace" --type=json \
+      -p='[{"op":"remove","path":"/spec/template/spec/containers/0/volumeMounts"}]' >/dev/null 2>&1 || true
+    "${kube[@]}" patch deployment "$deployment" -n "$namespace" --type=json \
+      -p='[{"op":"remove","path":"/spec/template/spec/volumes"}]' >/dev/null 2>&1 || true
+    log "local volumes removed for portable workload $namespace/$deployment"
+  fi
+
   local is_maildev=false
   if [[ "$service" == *smtp* ]] || [[ "$deployment" == *smtp* ]] || [[ "$source_image" == *maildev* ]]; then
     is_maildev=true
